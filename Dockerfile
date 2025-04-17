@@ -28,4 +28,4 @@ RUN apt-get update && apt-get install -y wget gnupg ca-certificates && \
 EXPOSE 3000
 
 # 9. Khởi chạy ứng dụng
-CMD ["node", "server_use_cookie.js"]
+CMD ["npm", "start"]
