@@ -1,0 +1,26 @@
+{
+  "name": "Get-video",
+  "version": "1.0.0",
+  "main": "server_use_cookie.js",
+  "bin": "server_use_cookie.js",
+  "scripts": {
+    "start": "node server_use_cookie.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "puppeteer": "^24.6.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "pkg": {
+    "scripts": ["server_use_cookie.js"],
+    "assets": [
+      "cookies.json"
+    ]
+  }
+}
