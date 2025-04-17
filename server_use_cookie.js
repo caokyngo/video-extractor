@@ -16,9 +16,9 @@ app.get('/api/get-video', async (req, res) => {
 
   try {
     const browser = await puppeteer.launch({
-      headless: false,
+      headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+      
     });
 
     const page = await browser.newPage();
