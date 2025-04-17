@@ -2,10 +2,13 @@ const express = require('express');
 const puppeteer = require('puppeteer');
 const cors = require('cors');
 const fs = require('fs');
-const path = require('path');
+const path = require('path'); // ✅ Chỉ giữ 1 dòng này
 
 const app = express();
 app.use(cors());
+
+// Serve static files từ thư mục public
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/get-video', async (req, res) => {
   const pageURL = req.query.url;
@@ -15,7 +18,7 @@ app.get('/api/get-video', async (req, res) => {
     const browser = await puppeteer.launch({
       headless: false,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' // hoặc để trống nếu dùng Chromium mặc định
+      executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
     });
 
     const page = await browser.newPage();
@@ -54,7 +57,7 @@ app.get('/api/get-video', async (req, res) => {
     console.log("➡️ Truy cập:", pageURL);
     await page.goto(pageURL, { waitUntil: 'networkidle2', timeout: 60000 });
 
-    await page.mouse.click(400, 400); // kích hoạt click play
+    await page.mouse.click(400, 400);
     await page.evaluate(() => {
       const video = document.querySelector('video');
       if (video) {
@@ -82,10 +85,6 @@ app.get('/api/get-video', async (req, res) => {
     res.status(500).json({ error: 'Lỗi server', detail: err.message });
   }
 });
-const path = require('path');
-
-// Serve static files from /public
-app.use(express.static(path.join(__dirname, 'public')));
 
 app.listen(3000, () => {
   console.log('🚀 Server API đang chạy tại http://localhost:3000');
