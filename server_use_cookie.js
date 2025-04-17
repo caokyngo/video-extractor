@@ -82,6 +82,10 @@ app.get('/api/get-video', async (req, res) => {
     res.status(500).json({ error: 'Lỗi server', detail: err.message });
   }
 });
+const path = require('path');
+
+// Serve static files from /public
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.listen(3000, () => {
   console.log('🚀 Server API đang chạy tại http://localhost:3000');
