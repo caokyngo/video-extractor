@@ -2,23 +2,24 @@ const express = require('express');
 const puppeteer = require('puppeteer');
 const cors = require('cors');
 const fs = require('fs');
-const path = require('path'); // ✅ Chỉ giữ 1 dòng này
+const path = require('path');
 
 const app = express();
 app.use(cors());
 
-// Serve static files từ thư mục public
+// Serve static files (HTML, CSS, JS) from "public" folder
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/get-video', async (req, res) => {
   const pageURL = req.query.url;
-  if (!pageURL) return res.status(400).json({ error: 'Thiếu URL video' });
+  if (!pageURL) {
+    return res.status(400).json({ error: 'Thiếu URL video' });
+  }
 
   try {
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      
     });
 
     const page = await browser.newPage();
@@ -28,16 +29,18 @@ app.get('/api/get-video', async (req, res) => {
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115 Safari/537.36'
     );
 
+    // Load cookies (nếu có)
     const cookiePath = path.join(__dirname, 'cookies.json');
-    const rawCookies = JSON.parse(fs.readFileSync(cookiePath, 'utf-8'));
-    const cookies = rawCookies.map(cookie => {
-      if (cookie.sameSite && typeof cookie.sameSite !== 'string') {
-        delete cookie.sameSite;
-      }
-      return cookie;
-    });
-
-    await page.setCookie(...cookies);
+    if (fs.existsSync(cookiePath)) {
+      const rawCookies = JSON.parse(fs.readFileSync(cookiePath, 'utf-8'));
+      const cookies = rawCookies.map(cookie => {
+        if (cookie.sameSite && typeof cookie.sameSite !== 'string') {
+          delete cookie.sameSite;
+        }
+        return cookie;
+      });
+      await page.setCookie(...cookies);
+    }
 
     const mp4Urls = [];
 
@@ -46,23 +49,25 @@ app.get('/api/get-video', async (req, res) => {
         const url = response.url();
         const contentType = response.headers()['content-type'] || '';
         if (url.includes('.mp4') && url.includes('ahcdn') && contentType.includes('video')) {
-          console.log('🎯 Bắt được video:', url);
-          if (!mp4Urls.includes(url)) mp4Urls.push(url);
+          if (!mp4Urls.includes(url)) {
+            console.log('🎯 Bắt được video:', url);
+            mp4Urls.push(url);
+          }
         }
-      } catch (e) {
-        console.warn('⚠️ Lỗi khi phân tích response:', e.message);
+      } catch (err) {
+        console.warn('⚠️ Lỗi khi phân tích response:', err.message);
       }
     });
 
-    console.log("➡️ Truy cập:", pageURL);
+    console.log("➡️ Đang truy cập:", pageURL);
     await page.goto(pageURL, { waitUntil: 'networkidle2', timeout: 60000 });
 
-    await page.mouse.click(400, 400);
+    // Không dùng click, chỉ trigger play nếu video tồn tại
     await page.evaluate(() => {
       const video = document.querySelector('video');
       if (video) {
         video.muted = true;
-        video.play().catch(e => console.warn('Không thể play video:', e));
+        video.play().catch(() => {});
       }
     });
 
@@ -81,11 +86,13 @@ app.get('/api/get-video', async (req, res) => {
     }
 
   } catch (err) {
-    console.error('❌ Lỗi:', err.message);
+    console.error('❌ Lỗi server:', err);
     res.status(500).json({ error: 'Lỗi server', detail: err.message });
   }
 });
 
-app.listen(3000, () => {
-  console.log('🚀 Server API đang chạy tại http://localhost:3000');
+// ✅ Railway yêu cầu dùng PORT từ biến môi trường
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
 });
