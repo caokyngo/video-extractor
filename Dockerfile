@@ -1,25 +1,31 @@
-# Dockerfile
+# 1. Chọn image Node.js chính thức
 FROM node:18
-# Dùng image Node + Puppeteer sẵn có từ browserless/chrome
-FROM ghcr.io/puppeteer/puppeteer:latest
 
-# Tạo thư mục app
+# 2. Tạo thư mục làm việc
 WORKDIR /app
 
-# Copy toàn bộ source
+# 3. Copy package.json và cài đặt trước để dùng cache
+COPY package*.json ./
+
+# 4. Cài dependencies
+RUN npm install
+
+# 5. Copy toàn bộ source code trừ node_modules
 COPY . .
 
-# 👇 Thêm dòng này để cấp quyền
-RUN chown -R node:node /app
+# 6. Cấu hình để Puppeteer chạy trong Docker
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
-# Expose port Railway sẽ dùng
-ENV PORT=3000
+# 7. Cài đặt Chrome cho Puppeteer
+RUN apt-get update && apt-get install -y wget gnupg ca-certificates && \
+    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list && \
+    apt-get update && apt-get install -y google-chrome-stable && \
+    rm -rf /var/lib/apt/lists/*
+
+# 8. Expose port Railway yêu cầu
 EXPOSE 3000
 
-# Chạy dưới quyền user node
-USER node
-
-# Copy package info trước để cài dependency
-COPY package.json package-lock.json* ./
-RUN npm install
+# 9. Khởi chạy ứng dụng
 CMD ["node", "server_use_cookie.js"]
